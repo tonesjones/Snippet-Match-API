@@ -22,7 +22,7 @@ jobs:
     - name: Polaris Scan
       uses: synopsys-sig/synopsys-action@v1.9.0
       with:
-        polaris_server_url: ${{ vars.POLARIS_SERVERURL }}
+        polaris_server_url: https://poc.polaris.synopsys.com
         polaris_access_token: ${{ secrets.POLARIS_ACCESSTOKEN }}
         polaris_assessment_types: 'SAST,SCA'
         polaris_application_name:  aA-TJ-hello-java-${{ github.event.repository.name }}
