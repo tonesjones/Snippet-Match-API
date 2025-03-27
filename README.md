@@ -26,18 +26,19 @@ Add the following two actions to your repo in your .github/workflows directory (
     After merging your PR, the second action will run to upload the SARIF file containing your snippet data accessible in the repo’s Security Tab under Code Scanning. See above for SARIF support requirements.
 
     
-name: Snippet Analysis
-on:
-  pull_request:
-    types: [opened, reopened]
-
-jobs:
-  analyze-snippets: 
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
-    steps:
+        name: Snippet Analysis
+        
+        on:
+          pull_request:
+            types: [opened, reopened]
+        
+        jobs:
+          analyze-snippets: 
+            runs-on: ubuntu-latest
+            permissions:
+              issues: write
+              pull-requests: write
+            steps:
       - name: Fetch Bearer Token 
         run: |
           RESPONSE=$(curl -k -X POST -H "Authorization: token ${{ secrets.BLACK_DUCK_API_TOKEN }}" "https://${{ vars.HOSTNAME }}/api/tokens/authenticate")
