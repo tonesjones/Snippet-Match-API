@@ -25,6 +25,7 @@ After adding the two actions to your repo, edit your files and create a pull req
 
 After merging your PR, the second action will run to upload the SARIF file containing your snippet data accessible in the repo’s Security Tab under Code Scanning. See above for SARIF support requirements.
 
+Action #1
     
         name: Snippet Analysis
         
@@ -189,5 +190,35 @@ After merging your PR, the second action will run to upload the SARIF file conta
           git diff --staged --quiet || git commit -m "Adding license findings via GitHub Actions"
           git push || echo "No changes to commit"
 
+Action #2
 
+        name: "Upload SARIF"
+
+        on:
+          push:
+            branches:
+              - main
+        
+        jobs:
+          build:
+            runs-on: ubuntu-latest
+            permissions:
+              # required for all workflows
+              security-events: write
+              # only required for workflows in private repositories
+              actions: read
+              contents: read
+            steps:
+              # This step checks out a copy of your repository.
+              - name: Checkout repository
+                uses: actions/checkout@v4
+              - name: Upload SARIF file
+                uses: github/codeql-action/upload-sarif@v3
+                with:
+                  # Path to SARIF file relative to the root of the repository
+                  sarif_file: snippet-analysis.sarif
+                  # Optional category for the results
+                  # Used to differentiate multiple results for one commit
+                  category: Snippet Analysis
+        
 
