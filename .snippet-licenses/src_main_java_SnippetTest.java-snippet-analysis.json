@@ -1,0 +1,10 @@
+{
+  "logRef": "hub-scan_YLtDB6PW",
+  "errorMessage": "Invalid input property //api/snippet-matching",
+  "arguments": {
+    "propertyName": "//api/snippet-matching"
+  },
+  "errorCode": "{core.rest.invalid_input_property}",
+  "errors": [],
+  "links": []
+}
