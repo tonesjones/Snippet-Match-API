@@ -21,9 +21,9 @@ BLACK_DUCK_API_TOKEN: <Black Duck API Token> (**Needs read and write permissions
 WORKFLOW_GIT_ACCESS_TOKEN: <GitHub Token>
 Add the following two actions to your repo in your .github/workflows directory (create this if it does not exist)
 
-    After adding the two actions to your repo, edit your files and create a pull request. The snippet scan action will kick off and add comments to the PR Comment section with any found snippets.
+After adding the two actions to your repo, edit your files and create a pull request. The snippet scan action will kick off and add comments to the PR Comment section with any found snippets.
 
-    After merging your PR, the second action will run to upload the SARIF file containing your snippet data accessible in the repo’s Security Tab under Code Scanning. See above for SARIF support requirements.
+After merging your PR, the second action will run to upload the SARIF file containing your snippet data accessible in the repo’s Security Tab under Code Scanning. See above for SARIF support requirements.
 
     
         name: Snippet Analysis
