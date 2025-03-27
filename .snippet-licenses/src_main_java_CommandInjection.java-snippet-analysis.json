@@ -1,0 +1,12 @@
+{
+  "snippetMatches": {},
+  "_meta": {
+    "href": "https://sca.field-test.blackduck.com/api/snippet-matching",
+    "links": [
+      {
+        "rel": "licenses-description",
+        "href": "https://www.blackduck.com/glossary/what-are-open-source-licenses.html"
+      }
+    ]
+  }
+}
