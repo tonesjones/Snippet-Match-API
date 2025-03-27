@@ -1,0 +1,40 @@
+{
+  "snippetMatches": {
+    "RECIPROCAL": [
+      {
+        "projectName": "WebGoat",
+        "releaseVersion": "v2023.0",
+        "licenseDefinition": {
+          "name": "GNU General Public License v2.0 or later",
+          "spdxId": "GPL-2.0-or-later",
+          "ownership": "OPEN_SOURCE",
+          "licenseDisplayName": "GNU General Public License v2.0 or later"
+        },
+        "matchedFilePath": "/WebGoat-6398d31c145918322d5570f7e1d47741e540699a/src/main/java/org/owasp/webgoat/lessons/deserialization/InsecureDeserializationTask.java",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            59
+          ],
+          "matchedStartLines": [
+            23
+          ],
+          "matchedEndLines": [
+            81
+          ]
+        }
+      }
+    ]
+  },
+  "_meta": {
+    "href": "https://sca.field-test.blackduck.com/api/snippet-matching",
+    "links": [
+      {
+        "rel": "licenses-description",
+        "href": "https://www.blackduck.com/glossary/what-are-open-source-licenses.html"
+      }
+    ]
+  }
+}
