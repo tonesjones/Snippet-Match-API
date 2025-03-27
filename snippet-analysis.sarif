@@ -1,0 +1,290 @@
+{
+  "$schema": "http://json.schemastore.org/sarif-2.1.0",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Custom License Analyzer",
+          "version": "1.0",
+          "informationUri": "https://example.com"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "BSD-3-Clause",
+          "level": "warning",
+          "message": {
+            "text": "License match found: BSD 3-clause \"New\" or \"Revised\" License"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unknown",
+          "level": "warning",
+          "message": {
+            "text": "License match found: Unknown License"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 23
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "GPL-3.0-or-later",
+          "level": "warning",
+          "message": {
+            "text": "License match found: GNU General Public License v3.0 or later"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unknown",
+          "level": "warning",
+          "message": {
+            "text": "License match found: (GNU General Public License v2.0 or later AND BSD 3-clause \"New\" or \"Revised\" License AND Apache License 2.0 AND MIT License AND BSD 2-clause \"Simplified\" License AND GNU Lesser General Public License v2.1 or later AND Mozilla Public License 1.1)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "GPL-3.0-only",
+          "level": "warning",
+          "message": {
+            "text": "License match found: GNU General Public License v3.0 only"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unknown",
+          "level": "warning",
+          "message": {
+            "text": "License match found: (BSD 2-clause \"Simplified\" License AND GNU Lesser General Public License v2.1 or later)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "BSD-3-Clause",
+          "level": "warning",
+          "message": {
+            "text": "License match found: BSD 3-clause \"New\" or \"Revised\" License"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "BSD-3-Clause",
+          "level": "warning",
+          "message": {
+            "text": "License match found: BSD 3-clause \"New\" or \"Revised\" License"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MIT",
+          "level": "warning",
+          "message": {
+            "text": "License match found: MIT License"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "BSD-3-Clause",
+          "level": "warning",
+          "message": {
+            "text": "License match found: BSD 3-clause \"New\" or \"Revised\" License"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MIT",
+          "level": "warning",
+          "message": {
+            "text": "License match found: MIT License"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "BSD-3-Clause",
+          "level": "warning",
+          "message": {
+            "text": "License match found: BSD 3-clause \"New\" or \"Revised\" License"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Apache-2.0",
+          "level": "warning",
+          "message": {
+            "text": "License match found: Apache License 2.0"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_java_snippet-test-2.java-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 29
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

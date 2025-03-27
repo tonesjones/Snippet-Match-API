@@ -1,0 +1,339 @@
+{
+  "snippetMatches": {
+    "UNKNOWN": [
+      {
+        "projectName": "keen-dashboard",
+        "releaseVersion": "1.1.0",
+        "licenseDefinition": {
+          "name": "BSD 3-clause \"New\" or \"Revised\" License",
+          "spdxId": "BSD-3-Clause",
+          "ownership": "OPEN_SOURCE",
+          "licenseDisplayName": "BSD 3-clause \"New\" or \"Revised\" License"
+        },
+        "matchedFilePath": "/keen_dashboard-1.1.0/keen_dashboard/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            19
+          ]
+        }
+      },
+      {
+        "projectName": "siobhanmcgill/denyconformity",
+        "releaseVersion": "20230515-snapshot-8c5f95f9",
+        "licenseDefinition": {
+          "name": "Unknown License",
+          "ownership": "UNKNOWN",
+          "licenseDisplayName": "Unknown License"
+        },
+        "matchedFilePath": "/denyconformity-8c5f95f9a41a0ae2075b23481a003d0b43d7158e/server/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            23
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            13
+          ]
+        }
+      }
+    ],
+    "RECIPROCAL": [
+      {
+        "projectName": "Ansible",
+        "releaseVersion": "4.0.0",
+        "licenseDefinition": {
+          "name": "GNU General Public License v3.0 or later",
+          "spdxId": "GPL-3.0-or-later",
+          "ownership": "OPEN_SOURCE",
+          "licenseDisplayName": "GNU General Public License v3.0 or later"
+        },
+        "matchedFilePath": "/var/lib/awx/venv/awx/lib/python3.8/site-packages/django/contrib/admin/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            17
+          ]
+        }
+      },
+      {
+        "projectName": "gaesdk-python",
+        "releaseVersion": "20160912-snapshot-272f32c1",
+        "licenseDefinition": {
+          "licenseDisplayName": "(GNU General Public License v2.0 or later AND BSD 3-clause \"New\" or \"Revised\" License AND Apache License 2.0 AND MIT License AND BSD 2-clause \"Simplified\" License AND GNU Lesser General Public License v2.1 or later AND Mozilla Public License 1.1)"
+        },
+        "matchedFilePath": "/gaesdk-python-272f32c1afc9fef5c517290b2dbe18bade97b248/lib/django-1.11/django/contrib/admin/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            17
+          ]
+        }
+      },
+      {
+        "projectName": "qexo-static",
+        "releaseVersion": "1.0.2",
+        "licenseDefinition": {
+          "name": "GNU General Public License v3.0 only",
+          "spdxId": "GPL-3.0-only",
+          "ownership": "OPEN_SOURCE",
+          "licenseDisplayName": "GNU General Public License v3.0 only"
+        },
+        "matchedFilePath": "/package/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            17
+          ]
+        }
+      }
+    ],
+    "WEAK_RECIPROCAL": [
+      {
+        "projectName": "python-django-grappelli",
+        "releaseVersion": "2.14.1",
+        "licenseDefinition": {
+          "licenseDisplayName": "(BSD 2-clause \"Simplified\" License AND GNU Lesser General Public License v2.1 or later)"
+        },
+        "matchedFilePath": "2.14.1.tar.gz!/#/django-grappelli-2.14.1/grappelli/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            17
+          ]
+        }
+      }
+    ],
+    "PERMISSIVE": [
+      {
+        "projectName": "Django",
+        "releaseVersion": "1.11a1",
+        "licenseDefinition": {
+          "name": "BSD 3-clause \"New\" or \"Revised\" License",
+          "spdxId": "BSD-3-Clause",
+          "ownership": "OPEN_SOURCE",
+          "licenseDisplayName": "BSD 3-clause \"New\" or \"Revised\" License"
+        },
+        "matchedFilePath": "/django-1.11a1/django/contrib/admin/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            17
+          ]
+        }
+      },
+      {
+        "projectName": "django-grappelli",
+        "releaseVersion": "2.14.1",
+        "licenseDefinition": {
+          "name": "BSD 3-clause \"New\" or \"Revised\" License",
+          "spdxId": "BSD-3-Clause",
+          "ownership": "OPEN_SOURCE",
+          "licenseDisplayName": "BSD 3-clause \"New\" or \"Revised\" License"
+        },
+        "matchedFilePath": "/django-grappelli-4f447fbe52adc15683c329831d6a42efe25661c7/grappelli/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            17
+          ]
+        }
+      },
+      {
+        "projectName": "newpanjing/simpleui",
+        "releaseVersion": "4.0.3",
+        "licenseDefinition": {
+          "name": "MIT License",
+          "spdxId": "MIT",
+          "ownership": "OPEN_SOURCE",
+          "licenseDisplayName": "MIT License"
+        },
+        "matchedFilePath": "/simpleui-39801dd6dafac6631a8f228ec0b71b594608493f/simpleui/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            17
+          ]
+        }
+      },
+      {
+        "projectName": "cartoview",
+        "releaseVersion": "1.8",
+        "licenseDefinition": {
+          "name": "BSD 3-clause \"New\" or \"Revised\" License",
+          "spdxId": "BSD-3-Clause",
+          "ownership": "OPEN_SOURCE",
+          "licenseDisplayName": "BSD 3-clause \"New\" or \"Revised\" License"
+        },
+        "matchedFilePath": "/cartoview-1.8/cartoview/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            17
+          ]
+        }
+      },
+      {
+        "projectName": "DjangoDjangoAppCenter",
+        "releaseVersion": "0.0.11",
+        "licenseDefinition": {
+          "name": "MIT License",
+          "spdxId": "MIT",
+          "ownership": "OPEN_SOURCE",
+          "licenseDisplayName": "MIT License"
+        },
+        "matchedFilePath": "/AppCenter/simpleui/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            17
+          ]
+        }
+      },
+      {
+        "projectName": "keen-dashboard",
+        "releaseVersion": "1.0.1",
+        "licenseDefinition": {
+          "name": "BSD 3-clause \"New\" or \"Revised\" License",
+          "spdxId": "BSD-3-Clause",
+          "ownership": "OPEN_SOURCE",
+          "licenseDisplayName": "BSD 3-clause \"New\" or \"Revised\" License"
+        },
+        "matchedFilePath": "/keen_dashboard-1.0.1/keen_dashboard/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            18
+          ]
+        }
+      },
+      {
+        "projectName": "django-simpleui",
+        "releaseVersion": "4.0",
+        "licenseDefinition": {
+          "name": "Apache License 2.0",
+          "spdxId": "Apache-2.0",
+          "ownership": "OPEN_SOURCE",
+          "licenseDisplayName": "Apache License 2.0"
+        },
+        "matchedFilePath": "/django-simpleui-4.0/simpleui/static/admin/js/change_form.js",
+        "regions": {
+          "sourceStartLines": [
+            1
+          ],
+          "sourceEndLines": [
+            29
+          ],
+          "matchedStartLines": [
+            1
+          ],
+          "matchedEndLines": [
+            17
+          ]
+        }
+      }
+    ]
+  },
+  "_meta": {
+    "href": "https://sca.field-test.blackduck.com/api/snippet-matching",
+    "links": [
+      {
+        "rel": "licenses-description",
+        "href": "https://www.blackduck.com/glossary/what-are-open-source-licenses.html"
+      }
+    ]
+  }
+}
