@@ -1,11 +1,10 @@
-// https://logging.apache.org/log4j/2.x/manual/api.html
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+/**
+ * Minimal app entry point for the Snippet Match API demo repository.
+ * Open a PR that adds known open-source-like code (see demo/fixtures) to exercise
+ * Black Duck snippet license analysis on pull requests.
+ */
 public class HelloWorld {
-    private static final Logger logger = LogManager.getLogger("HelloWorld");
     public static void main(String[] args) {
-        logger.info("Hello, World!");
+        System.out.println("Hello, World!");
     }
 }

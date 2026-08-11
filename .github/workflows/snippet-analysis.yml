@@ -1,0 +1,463 @@
+name: Snippet Analysis
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+# Demo workflow: scan PR source changes with Black Duck Snippet Matching API,
+# post a PR comment (license risk), and upload SARIF for Code Scanning.
+# Does not commit analysis artifacts back to the branch.
+
+jobs:
+  analyze-snippets:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      security-events: write
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: List changed source files
+        id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Extensions commonly useful for snippet matching demos
+          SOURCE_REGEX='\.(java|c|cc|cpp|cxx|h|hpp|cs|go|js|jsx|ts|tsx|py|rb|php|swift|kt|kts|scala|rs|m|mm|pl|pm|sh|sql|xml|gradle|groovy)$'
+
+          mkdir -p .snippet-results/raw
+          : > .snippet-results/files.txt
+          : > /tmp/all-changed.txt
+
+          page=1
+          while true; do
+            RESP=$(curl -sS \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/files?per_page=100&page=${page}")
+            COUNT=$(echo "$RESP" | jq 'length')
+            if [ "$COUNT" -eq 0 ]; then
+              break
+            fi
+            echo "$RESP" | jq -r '.[] | select(.status != "removed") | .filename' >> /tmp/all-changed.txt
+            if [ "$COUNT" -lt 100 ]; then
+              break
+            fi
+            page=$((page + 1))
+          done
+
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            # Skip demo fixtures directory so only "developer" source is scanned
+            case "$f" in
+              demo/*) echo "Skipping demo path: $f"; continue ;;
+            esac
+            if echo "$f" | grep -Eqi "$SOURCE_REGEX"; then
+              if [ -f "$f" ]; then
+                echo "$f" >> .snippet-results/files.txt
+              else
+                echo "Skipping missing path: $f"
+              fi
+            else
+              echo "Skipping non-source path: $f"
+            fi
+          done < /tmp/all-changed.txt
+
+          TOTAL=$(wc -l < .snippet-results/files.txt | tr -d ' ')
+          echo "Selected ${TOTAL} source file(s) for snippet analysis."
+          echo "count=${TOTAL}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve Black Duck base URL
+        if: steps.files.outputs.count != '0'
+        id: bd
+        env:
+          HOSTNAME: ${{ vars.HOSTNAME }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HOSTNAME:-}" ]; then
+            echo "::error::Repository variable HOSTNAME is not set (Black Duck host or full base URL)."
+            exit 1
+          fi
+          case "$HOSTNAME" in
+            https://*|http://*) BASE_URL="${HOSTNAME%/}" ;;
+            *) BASE_URL="https://${HOSTNAME}" ;;
+          esac
+          echo "base_url=${BASE_URL}" >> "$GITHUB_OUTPUT"
+          echo "Using Black Duck base URL: ${BASE_URL}"
+
+      - name: Authenticate to Black Duck
+        if: steps.files.outputs.count != '0'
+        id: auth
+        env:
+          BLACK_DUCK_API_TOKEN: ${{ secrets.BLACK_DUCK_API_TOKEN }}
+          BASE_URL: ${{ steps.bd.outputs.base_url }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BLACK_DUCK_API_TOKEN:-}" ]; then
+            echo "::error::Secret BLACK_DUCK_API_TOKEN is not set."
+            exit 1
+          fi
+          HTTP_CODE=$(curl -sS -o /tmp/bd-auth.json -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: token ${BLACK_DUCK_API_TOKEN}" \
+            -H "Accept: application/json" \
+            "${BASE_URL}/api/tokens/authenticate")
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Black Duck authentication failed (HTTP ${HTTP_CODE})."
+            cat /tmp/bd-auth.json || true
+            exit 1
+          fi
+          BEARER_TOKEN=$(jq -r '.bearerToken // empty' /tmp/bd-auth.json)
+          if [ -z "$BEARER_TOKEN" ] || [ "$BEARER_TOKEN" = "null" ]; then
+            echo "::error::Authentication response did not include bearerToken."
+            cat /tmp/bd-auth.json || true
+            exit 1
+          fi
+          echo "::add-mask::${BEARER_TOKEN}"
+          echo "BEARER_TOKEN=${BEARER_TOKEN}" >> "$GITHUB_ENV"
+
+      - name: Query Black Duck snippet matches
+        if: steps.files.outputs.count != '0'
+        env:
+          BASE_URL: ${{ steps.bd.outputs.base_url }}
+          MAX_FILES: ${{ vars.MAX_SNIPPET_FILES }}
+        run: |
+          set -euo pipefail
+          MAX_FILES="${MAX_FILES:-10}"
+          : > .snippet-results/manifest.jsonl
+          count=0
+          truncated=0
+
+          while IFS= read -r filepath; do
+            [ -z "$filepath" ] && continue
+            if [ "$count" -ge "$MAX_FILES" ]; then
+              truncated=1
+              echo "Reached MAX_SNIPPET_FILES=${MAX_FILES}; remaining files not scanned."
+              break
+            fi
+            count=$((count + 1))
+            safe_id=$(printf '%s' "$filepath" | sha256sum | awk '{print $1}')
+            out=".snippet-results/raw/${safe_id}.json"
+            echo "Scanning (${count}): ${filepath}"
+
+            HTTP_CODE=$(curl -sS -o "$out" -w "%{http_code}" \
+              -X POST \
+              -H "Authorization: Bearer ${BEARER_TOKEN}" \
+              -H "Content-Type: text/plain" \
+              -H "Accept: application/json" \
+              --data-binary @"${filepath}" \
+              "${BASE_URL}/api/snippet-matching")
+
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "::warning::Snippet API returned HTTP ${HTTP_CODE} for ${filepath}"
+              jq -n --arg path "$filepath" --arg code "$HTTP_CODE" --slurpfile body "$out" \
+                '{path:$path, error:true, httpCode:($code|tonumber), body:$body[0]}' \
+                >> .snippet-results/manifest.jsonl || \
+                printf '{"path":"%s","error":true,"httpCode":%s}\n' "$filepath" "$HTTP_CODE" >> .snippet-results/manifest.jsonl
+              continue
+            fi
+
+            if ! jq -e '.snippetMatches != null' "$out" >/dev/null 2>&1; then
+              echo "::warning::Unexpected response shape for ${filepath}"
+              jq -n --arg path "$filepath" --slurpfile body "$out" \
+                '{path:$path, error:true, body:$body[0]}' >> .snippet-results/manifest.jsonl
+              continue
+            fi
+
+            jq -n --arg path "$filepath" --arg file "$out" --slurpfile body "$out" \
+              '{path:$path, resultFile:$file, error:false, snippetMatches:$body[0].snippetMatches}' \
+              >> .snippet-results/manifest.jsonl
+          done < .snippet-results/files.txt
+
+          echo "truncated=${truncated}" >> "$GITHUB_ENV"
+          echo "scanned_count=${count}" >> "$GITHUB_ENV"
+          echo "Scanned ${count} file(s)."
+
+      - name: Generate SARIF report
+        if: steps.files.outputs.count != '0'
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest_path = Path(".snippet-results/manifest.jsonl")
+          results = []
+          rules = {}
+
+          def level_for(family: str) -> str:
+              f = (family or "UNKNOWN").upper()
+              if f.startswith("RECIPROCAL"):
+                  return "error"
+              if f == "WEAK_RECIPROCAL":
+                  return "warning"
+              if f == "PERMISSIVE":
+                  return "note"
+              return "warning"
+
+          if manifest_path.exists():
+              for line in manifest_path.read_text(encoding="utf-8").splitlines():
+                  if not line.strip():
+                      continue
+                  entry = json.loads(line)
+                  if entry.get("error"):
+                      continue
+                  path = entry["path"]
+                  matches = entry.get("snippetMatches") or {}
+                  for family, items in matches.items():
+                      for match in items or []:
+                          lic = match.get("licenseDefinition") or {}
+                          spdx = lic.get("spdxId") or "unknown-license"
+                          display = lic.get("licenseDisplayName") or lic.get("name") or spdx
+                          project = match.get("projectName") or "N/A"
+                          version = match.get("releaseVersion") or "N/A"
+                          regions = match.get("regions") or {}
+                          start_lines = regions.get("sourceStartLines") or [1]
+                          end_lines = regions.get("sourceEndLines") or start_lines
+                          start = int(start_lines[0]) if start_lines else 1
+                          end = int(end_lines[0]) if end_lines else start
+                          if start < 1:
+                              start = 1
+                          if end < start:
+                              end = start
+
+                          if spdx not in rules:
+                              rules[spdx] = {
+                                  "id": spdx,
+                                  "name": display,
+                                  "shortDescription": {"text": f"Open source snippet license: {display}"},
+                                  "fullDescription": {
+                                      "text": f"Snippet match associated with license {display} ({family})."
+                                  },
+                                  "defaultConfiguration": {"level": level_for(family)},
+                                  "helpUri": "https://www.blackduck.com/glossary/what-are-open-source-licenses.html",
+                                  "properties": {
+                                      "security-severity": "7.0"
+                                      if str(family).upper().startswith("RECIPROCAL")
+                                      else "3.0"
+                                  },
+                              }
+
+                          msg = (
+                              f"License match found: {display} "
+                              f"(type: {family}; project: {project} {version})"
+                          )
+                          results.append(
+                              {
+                                  "ruleId": spdx,
+                                  "level": level_for(family),
+                                  "message": {"text": msg},
+                                  "locations": [
+                                      {
+                                          "physicalLocation": {
+                                              "artifactLocation": {
+                                                  "uri": path.replace("\\", "/"),
+                                                  "uriBaseId": "%SRCROOT%",
+                                              },
+                                              "region": {
+                                                  "startLine": start,
+                                                  "endLine": end,
+                                              },
+                                          }
+                                      }
+                                  ],
+                                  "properties": {
+                                      "licenseType": family,
+                                      "projectName": project,
+                                      "releaseVersion": version,
+                                  },
+                              }
+                          )
+
+          sarif = {
+              "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+              "version": "2.1.0",
+              "runs": [
+                  {
+                      "tool": {
+                          "driver": {
+                              "name": "Black Duck Snippet License Analyzer",
+                              "version": "2.0",
+                              "informationUri": "https://www.blackduck.com/blog/analyze-ai-generated-code-black-duck-snippet-api.html",
+                              "rules": list(rules.values()),
+                          }
+                      },
+                      "results": results,
+                  }
+              ],
+          }
+
+          out = Path("snippet-analysis.sarif")
+          out.write_text(json.dumps(sarif, indent=2), encoding="utf-8")
+          print(f"Wrote {out} with {len(results)} result(s) and {len(rules)} rule(s).")
+          PY
+
+      - name: Generate empty SARIF when no source files
+        if: steps.files.outputs.count == '0'
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          sarif = {
+              "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+              "version": "2.1.0",
+              "runs": [{
+                  "tool": {
+                      "driver": {
+                          "name": "Black Duck Snippet License Analyzer",
+                          "version": "2.0",
+                          "rules": [],
+                      }
+                  },
+                  "results": [],
+              }],
+          }
+          Path("snippet-analysis.sarif").write_text(json.dumps(sarif, indent=2), encoding="utf-8")
+          print("Wrote empty snippet-analysis.sarif")
+          PY
+
+      - name: Comment findings on pull request
+        uses: actions/github-script@v7
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          SCANNED_COUNT: ${{ env.scanned_count }}
+          TRUNCATED: ${{ env.truncated }}
+          FILE_COUNT: ${{ steps.files.outputs.count }}
+        with:
+          script: |
+            const fs = require('fs');
+
+            const marker = '<!-- snippet-license-analysis -->';
+            const headSha = process.env.HEAD_SHA;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.issue.number;
+            const fileCount = parseInt(process.env.FILE_COUNT || '0', 10);
+
+            const riskyFamilies = new Set([
+              'RECIPROCAL',
+              'RECIPROCAL_AGPL',
+              'RECIPROCAL_NETWORK',
+              'WEAK_RECIPROCAL',
+            ]);
+
+            function blobUrl(filePath, lines) {
+              return `https://github.com/${owner}/${repo}/blob/${headSha}/${filePath}#${lines}`;
+            }
+
+            let body = `${marker}\n## Snippet License Analysis Results\n\n`;
+
+            if (fileCount === 0) {
+              body += '_No eligible source files changed on this pull request._\n';
+            } else {
+              const manifestPath = '.snippet-results/manifest.jsonl';
+              if (!fs.existsSync(manifestPath)) {
+                body += '_Scan did not produce results. Check the workflow logs._\n';
+              } else {
+                const lines = fs.readFileSync(manifestPath, 'utf8').split('\n').filter(Boolean);
+                let anyMatch = false;
+
+                for (const line of lines) {
+                  const entry = JSON.parse(line);
+                  const filePath = entry.path;
+                  body += `### File: [\`${filePath}\`](https://github.com/${owner}/${repo}/blob/${headSha}/${filePath})\n\n`;
+
+                  if (entry.error) {
+                    body += `> ⚠️ Snippet API error${entry.httpCode ? ` (HTTP ${entry.httpCode})` : ''}. See workflow logs.\n\n`;
+                    continue;
+                  }
+
+                  const matches = entry.snippetMatches || {};
+                  const families = Object.keys(matches);
+                  if (families.length === 0) {
+                    body += 'No significant matches found.\n\n';
+                    continue;
+                  }
+
+                  const ordered = [
+                    ...families.filter((f) => riskyFamilies.has(f)),
+                    ...families.filter((f) => !riskyFamilies.has(f)),
+                  ];
+
+                  for (const licenseType of ordered) {
+                    for (const match of matches[licenseType] || []) {
+                      anyMatch = true;
+                      const projectName = match.projectName || 'N/A';
+                      const releaseVersion = match.releaseVersion || 'N/A';
+                      const licenseName =
+                        (match.licenseDefinition &&
+                          (match.licenseDefinition.licenseDisplayName ||
+                            match.licenseDefinition.name)) ||
+                        'Unknown License';
+                      const start =
+                        (match.regions &&
+                          match.regions.sourceStartLines &&
+                          match.regions.sourceStartLines[0]) ||
+                        1;
+                      const end =
+                        (match.regions &&
+                          match.regions.sourceEndLines &&
+                          match.regions.sourceEndLines[0]) ||
+                        start;
+                      const lineAnchor = `L${start}-L${end}`;
+                      const attention = riskyFamilies.has(licenseType) ? ' ⚠️' : '';
+
+                      body += `- **Project:** ${projectName}, **Version:** ${releaseVersion}\n`;
+                      body += `- **Path:** [\`${filePath}#${lineAnchor}\`](${blobUrl(filePath, lineAnchor)})\n`;
+                      body += `  - **License Name:** ${licenseName}\n`;
+                      body += `  - **License Type:** \`${licenseType}\`${attention}\n\n`;
+                    }
+                  }
+                }
+
+                if (process.env.TRUNCATED === '1') {
+                  body += `\n> Note: file scan limit reached; only the first ${process.env.SCANNED_COUNT || '?'} source file(s) were analyzed.\n`;
+                }
+
+                if (anyMatch) {
+                  body +=
+                    '\n---\n_License types `RECIPROCAL*` (e.g. GPL) may require source disclosure or other obligations. Review matches before merge._\n';
+                }
+              }
+            }
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find(
+              (c) => c.user && c.user.type === 'Bot' && c.body && c.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+              core.info(`Updated existing comment ${existing.id}`);
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+              core.info('Created new PR comment');
+            }
+
+      - name: Upload SARIF to code scanning
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snippet-analysis.sarif
+          category: snippet-license-analysis
