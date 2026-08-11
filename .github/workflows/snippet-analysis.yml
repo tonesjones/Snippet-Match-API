@@ -156,7 +156,8 @@ jobs:
 
             if [ "$HTTP_CODE" != "200" ]; then
               echo "::warning::Snippet API returned HTTP ${HTTP_CODE} for ${filepath}"
-              jq -n --arg path "$filepath" --arg code "$HTTP_CODE" --slurpfile body "$out" \
+              # -c: one JSON object per line (jsonl); default jq pretty-print breaks line parsers
+              jq -cn --arg path "$filepath" --arg code "$HTTP_CODE" --slurpfile body "$out" \
                 '{path:$path, error:true, httpCode:($code|tonumber), body:$body[0]}' \
                 >> .snippet-results/manifest.jsonl || \
                 printf '{"path":"%s","error":true,"httpCode":%s}\n' "$filepath" "$HTTP_CODE" >> .snippet-results/manifest.jsonl
@@ -165,12 +166,12 @@ jobs:
 
             if ! jq -e '.snippetMatches != null' "$out" >/dev/null 2>&1; then
               echo "::warning::Unexpected response shape for ${filepath}"
-              jq -n --arg path "$filepath" --slurpfile body "$out" \
+              jq -cn --arg path "$filepath" --slurpfile body "$out" \
                 '{path:$path, error:true, body:$body[0]}' >> .snippet-results/manifest.jsonl
               continue
             fi
 
-            jq -n --arg path "$filepath" --arg file "$out" --slurpfile body "$out" \
+            jq -cn --arg path "$filepath" --arg file "$out" --slurpfile body "$out" \
               '{path:$path, resultFile:$file, error:false, snippetMatches:$body[0].snippetMatches}' \
               >> .snippet-results/manifest.jsonl
           done < .snippet-results/files.txt
@@ -181,6 +182,8 @@ jobs:
 
       - name: Generate SARIF report
         if: steps.files.outputs.count != '0'
+        id: sarif
+        continue-on-error: true
         run: |
           set -euo pipefail
           python3 <<'PY'
@@ -202,10 +205,16 @@ jobs:
               return "warning"
 
           if manifest_path.exists():
-              for line in manifest_path.read_text(encoding="utf-8").splitlines():
-                  if not line.strip():
-                      continue
-                  entry = json.loads(line)
+              raw = manifest_path.read_text(encoding="utf-8").strip()
+              # Prefer jsonl (one object per line). Fall back to a single JSON value.
+              candidate_lines = [ln for ln in raw.splitlines() if ln.strip()]
+              entries = []
+              if candidate_lines:
+                  try:
+                      entries = [json.loads(ln) for ln in candidate_lines]
+                  except json.JSONDecodeError:
+                      entries = [json.loads(raw)]
+              for entry in entries:
                   if entry.get("error"):
                       continue
                   path = entry["path"]
@@ -228,20 +237,26 @@ jobs:
                               end = start
 
                           if spdx not in rules:
+                              sev = (
+                                  "7.0"
+                                  if str(family).upper().startswith("RECIPROCAL")
+                                  else "3.0"
+                              )
                               rules[spdx] = {
                                   "id": spdx,
                                   "name": display,
-                                  "shortDescription": {"text": f"Open source snippet license: {display}"},
+                                  "shortDescription": {
+                                      "text": f"Open source snippet license: {display}"
+                                  },
                                   "fullDescription": {
-                                      "text": f"Snippet match associated with license {display} ({family})."
+                                      "text": (
+                                          f"Snippet match associated with license "
+                                          f"{display} ({family})."
+                                      )
                                   },
                                   "defaultConfiguration": {"level": level_for(family)},
                                   "helpUri": "https://www.blackduck.com/glossary/what-are-open-source-licenses.html",
-                                  "properties": {
-                                      "security-severity": "7.0"
-                                      if str(family).upper().startswith("RECIPROCAL")
-                                      else "3.0"
-                                  },
+                                  "properties": {"security-severity": sev},
                               }
 
                           msg = (
