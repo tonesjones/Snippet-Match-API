@@ -8,12 +8,14 @@ When a PR introduces source that matches known open source in the Black Duck Kno
 2. Sends each changed source file to `POST /api/snippet-matching`.
 3. Posts (or updates) a PR comment: **Snippet License Analysis Results**.
 
-This is the same flow that produced a comment like:
+Example finding (from a clean demo run):
 
 > **File:** `src/main/java/DeserializationTask.java`  
 > - Project: WebGoat, Version: v2023.0  
 > - License Name: GNU General Public License v2.0 or later  
 > - License Type: `RECIPROCAL`
+
+This demo uses **PR comments only** (no CodeQL, no SARIF upload).
 
 ---
 
@@ -23,8 +25,9 @@ This is the same flow that produced a comment like:
 |-------------|--------|
 | Black Duck SCA | Server licensed for **Generative AI Snippet Scanning** (Snippet Matching REST API) |
 | API token | Black Duck user token with permission to call the snippet API |
-| GitHub repo | Actions enabled; this workflow checked in under `.github/workflows/` |
-Classic Signature Scanner `--snippet-matching` is a **different** path. This demo uses the **REST Snippet Matching API** only.
+| GitHub repo | Actions enabled; workflow present under `.github/workflows/` |
+
+Classic Signature Scanner `--snippet-matching` is a **different** path. This repo uses only the **REST Snippet Matching API**.
 
 ---
 
@@ -59,7 +62,7 @@ No personal GitHub PAT is required. The workflow uses `GITHUB_TOKEN` for PR comm
 ```bash
 git checkout main
 git pull
-git checkout -b demo/gpl-snippet
+git checkout -b demo/snippet-license-run
 
 # Simulate a developer pasting / generating code that matches OSS (GPL)
 cp demo/fixtures/DeserializationTask.java src/main/java/DeserializationTask.java
@@ -73,11 +76,14 @@ Open a pull request into `main`, then open the **Conversation** tab.
 
 ### Expected result
 
-- Workflow **Snippet Analysis** succeeds.
+- Only the **Snippet Analysis** check runs (`analyze-snippets`).
+- Workflow succeeds in roughly 10–30 seconds (depends on Black Duck latency).
 - A bot comment titled **Snippet License Analysis Results** lists project, version, license name, and license type.
-- Risky families (`RECIPROCAL`, `RECIPROCAL_AGPL`, `RECIPROCAL_NETWORK`, `WEAK_RECIPROCAL`) are highlighted.
+- Risky families (`RECIPROCAL`, `RECIPROCAL_AGPL`, `RECIPROCAL_NETWORK`, `WEAK_RECIPROCAL`) are marked with ⚠️.
 - Re-pushing to the same PR **updates** the same comment (no spam).
 - The Action does **not** commit analysis files onto your branch.
+
+You may see multiple WebGoat versions for the same file — that is normal for the KnowledgeBase.
 
 More detail: [demo/README.md](demo/README.md).
 
@@ -99,20 +105,20 @@ pull_request (opened | reopened | synchronize)
 **Scanned extensions (demo set):**  
 `.java`, `.c/.cpp/.h`, `.cs`, `.go`, `.js/.ts`, `.py`, `.rb`, `.php`, `.swift`, `.kt`, `.scala`, `.rs`, and a few others — see the workflow regex.
 
-**Not scanned:** deleted files, non-source paths (Markdown, workflow YAML, etc.).
+**Not scanned:** deleted files, paths under `demo/`, non-source paths (Markdown, workflow YAML, etc.).
 
 ---
 
 ## License type legend
 
-Matches are grouped by Black Duck license family, including:
+Matches are grouped by Black Duck license family:
 
 | Type | Typical risk signal |
 |------|---------------------|
 | `PERMISSIVE` | Often lower obligation (e.g. MIT, Apache) |
 | `WEAK_RECIPROCAL` | Weak copyleft (e.g. LGPL-style) |
 | `RECIPROCAL` | Strong copyleft (e.g. **GPL**) — demo callout |
-| `RECIPROCAL_AGPL` / `RECIPROCAL_NETWORK` | Network/stronger copyleft |
+| `RECIPROCAL_AGPL` / `RECIPROCAL_NETWORK` | Network / stronger copyleft |
 | `UNKNOWN` | Review manually |
 
 Snippet matching is a heuristic; treat results as **review guidance**, not automatic legal conclusions.
@@ -128,16 +134,19 @@ Snippet matching is a heuristic; treat results as **review guidance**, not autom
 | “Generative AI Compliance” / feature errors | Server registration must include Snippet Matching API capability |
 | Comment missing | Workflow permissions: `pull-requests: write`; Actions allowed for the repo |
 | Double `https://` | Prefer host-only `HOSTNAME` (`sca.example.com`); full URLs are also accepted |
+| Extra CodeQL checks | CodeQL default setup should be off for this demo (`not-configured`) |
 
 ---
 
 ## Repository layout
 
 ```text
-.github/workflows/snippet-analysis.yml   # PR scan + comment + SARIF
-demo/fixtures/                           # Known GPL-matching sample
+.github/workflows/snippet-analysis.yml   # PR scan + sticky license comment
+demo/fixtures/                           # Known GPL-matching sample (copy into src for a PR)
+demo/README.md                           # Short demo walkthrough
 src/main/java/HelloWorld.java            # Clean baseline on main
 pom.xml                                  # Minimal Java project metadata
+.gitignore                               # Ignores local analysis artifacts
 ```
 
 ---
