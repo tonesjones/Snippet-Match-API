@@ -25,5 +25,3 @@ comment titled **Snippet License Analysis Results**, similar to:
 - **License Name:** GNU General Public License v2.0 or later  
 - **License Type:** `RECIPROCAL`
 
-If Code Scanning is enabled for the repository, a SARIF upload also appears
-under the Security tab.
