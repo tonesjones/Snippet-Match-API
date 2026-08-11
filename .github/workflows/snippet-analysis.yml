@@ -4,9 +4,9 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
-# Demo workflow: scan PR source changes with Black Duck Snippet Matching API,
-# post a PR comment (license risk), and upload SARIF for Code Scanning.
-# Does not commit analysis artifacts back to the branch.
+# Demo workflow: scan PR source changes with Black Duck Snippet Matching API
+# and post a PR comment with license risk findings.
+# Does not commit analysis artifacts and does not run CodeQL / SARIF upload.
 
 jobs:
   analyze-snippets:
@@ -14,7 +14,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      security-events: write
 
     steps:
       - name: Checkout PR head
@@ -180,163 +179,6 @@ jobs:
           echo "scanned_count=${count}" >> "$GITHUB_ENV"
           echo "Scanned ${count} file(s)."
 
-      - name: Generate SARIF report
-        if: steps.files.outputs.count != '0'
-        id: sarif
-        continue-on-error: true
-        run: |
-          set -euo pipefail
-          python3 <<'PY'
-          import json
-          from pathlib import Path
-
-          manifest_path = Path(".snippet-results/manifest.jsonl")
-          results = []
-          rules = {}
-
-          def level_for(family: str) -> str:
-              f = (family or "UNKNOWN").upper()
-              if f.startswith("RECIPROCAL"):
-                  return "error"
-              if f == "WEAK_RECIPROCAL":
-                  return "warning"
-              if f == "PERMISSIVE":
-                  return "note"
-              return "warning"
-
-          if manifest_path.exists():
-              raw = manifest_path.read_text(encoding="utf-8").strip()
-              # Prefer jsonl (one object per line). Fall back to a single JSON value.
-              candidate_lines = [ln for ln in raw.splitlines() if ln.strip()]
-              entries = []
-              if candidate_lines:
-                  try:
-                      entries = [json.loads(ln) for ln in candidate_lines]
-                  except json.JSONDecodeError:
-                      entries = [json.loads(raw)]
-              for entry in entries:
-                  if entry.get("error"):
-                      continue
-                  path = entry["path"]
-                  matches = entry.get("snippetMatches") or {}
-                  for family, items in matches.items():
-                      for match in items or []:
-                          lic = match.get("licenseDefinition") or {}
-                          spdx = lic.get("spdxId") or "unknown-license"
-                          display = lic.get("licenseDisplayName") or lic.get("name") or spdx
-                          project = match.get("projectName") or "N/A"
-                          version = match.get("releaseVersion") or "N/A"
-                          regions = match.get("regions") or {}
-                          start_lines = regions.get("sourceStartLines") or [1]
-                          end_lines = regions.get("sourceEndLines") or start_lines
-                          start = int(start_lines[0]) if start_lines else 1
-                          end = int(end_lines[0]) if end_lines else start
-                          if start < 1:
-                              start = 1
-                          if end < start:
-                              end = start
-
-                          if spdx not in rules:
-                              sev = (
-                                  "7.0"
-                                  if str(family).upper().startswith("RECIPROCAL")
-                                  else "3.0"
-                              )
-                              rules[spdx] = {
-                                  "id": spdx,
-                                  "name": display,
-                                  "shortDescription": {
-                                      "text": f"Open source snippet license: {display}"
-                                  },
-                                  "fullDescription": {
-                                      "text": (
-                                          f"Snippet match associated with license "
-                                          f"{display} ({family})."
-                                      )
-                                  },
-                                  "defaultConfiguration": {"level": level_for(family)},
-                                  "helpUri": "https://www.blackduck.com/glossary/what-are-open-source-licenses.html",
-                                  "properties": {"security-severity": sev},
-                              }
-
-                          msg = (
-                              f"License match found: {display} "
-                              f"(type: {family}; project: {project} {version})"
-                          )
-                          results.append(
-                              {
-                                  "ruleId": spdx,
-                                  "level": level_for(family),
-                                  "message": {"text": msg},
-                                  "locations": [
-                                      {
-                                          "physicalLocation": {
-                                              "artifactLocation": {
-                                                  "uri": path.replace("\\", "/"),
-                                                  "uriBaseId": "%SRCROOT%",
-                                              },
-                                              "region": {
-                                                  "startLine": start,
-                                                  "endLine": end,
-                                              },
-                                          }
-                                      }
-                                  ],
-                                  "properties": {
-                                      "licenseType": family,
-                                      "projectName": project,
-                                      "releaseVersion": version,
-                                  },
-                              }
-                          )
-
-          sarif = {
-              "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-              "version": "2.1.0",
-              "runs": [
-                  {
-                      "tool": {
-                          "driver": {
-                              "name": "Black Duck Snippet License Analyzer",
-                              "version": "2.0",
-                              "informationUri": "https://www.blackduck.com/blog/analyze-ai-generated-code-black-duck-snippet-api.html",
-                              "rules": list(rules.values()),
-                          }
-                      },
-                      "results": results,
-                  }
-              ],
-          }
-
-          out = Path("snippet-analysis.sarif")
-          out.write_text(json.dumps(sarif, indent=2), encoding="utf-8")
-          print(f"Wrote {out} with {len(results)} result(s) and {len(rules)} rule(s).")
-          PY
-
-      - name: Generate empty SARIF when no source files
-        if: steps.files.outputs.count == '0'
-        run: |
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          sarif = {
-              "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-              "version": "2.1.0",
-              "runs": [{
-                  "tool": {
-                      "driver": {
-                          "name": "Black Duck Snippet License Analyzer",
-                          "version": "2.0",
-                          "rules": [],
-                      }
-                  },
-                  "results": [],
-              }],
-          }
-          Path("snippet-analysis.sarif").write_text(json.dumps(sarif, indent=2), encoding="utf-8")
-          print("Wrote empty snippet-analysis.sarif")
-          PY
-
       - name: Comment findings on pull request
         uses: actions/github-script@v7
         env:
@@ -469,10 +311,3 @@ jobs:
               });
               core.info('Created new PR comment');
             }
-
-      - name: Upload SARIF to code scanning
-        continue-on-error: true
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: snippet-analysis.sarif
-          category: snippet-license-analysis

@@ -11,7 +11,7 @@
   <name>snippet-match-api-demo</name>
   <description>
     Demo repository for Black Duck Snippet Matching API on GitHub pull requests.
-    CI posts license findings (e.g. GPL / RECIPROCAL) as PR comments and SARIF.
+    CI posts license findings (e.g. GPL / RECIPROCAL) as PR comments.
   </description>
 
   <properties>

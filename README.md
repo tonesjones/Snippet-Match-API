@@ -7,7 +7,6 @@ When a PR introduces source that matches known open source in the Black Duck Kno
 1. Authenticates to your Black Duck server.
 2. Sends each changed source file to `POST /api/snippet-matching`.
 3. Posts (or updates) a PR comment: **Snippet License Analysis Results**.
-4. Uploads a SARIF report to GitHub Code Scanning (when enabled).
 
 This is the same flow that produced a comment like:
 
@@ -25,8 +24,6 @@ This is the same flow that produced a comment like:
 | Black Duck SCA | Server licensed for **Generative AI Snippet Scanning** (Snippet Matching REST API) |
 | API token | Black Duck user token with permission to call the snippet API |
 | GitHub repo | Actions enabled; this workflow checked in under `.github/workflows/` |
-| Code Scanning (optional) | Needed for the Security tab SARIF view. Public repos work out of the box; private repos typically need GitHub Advanced Security |
-
 Classic Signature Scanner `--snippet-matching` is a **different** path. This demo uses the **REST Snippet Matching API** only.
 
 ---
@@ -53,11 +50,7 @@ Classic Signature Scanner `--snippet-matching` is a **different** path. This dem
 |------|-------------|
 | `BLACK_DUCK_API_TOKEN` | Black Duck API token |
 
-No personal GitHub PAT is required. The workflow uses `GITHUB_TOKEN` for PR comments and SARIF upload.
-
-### Repo settings for Code Scanning (optional)
-
-**Settings → Code security → Code scanning**: enable as required by your org so SARIF upload can publish alerts.
+No personal GitHub PAT is required. The workflow uses `GITHUB_TOKEN` for PR comments.
 
 ---
 
@@ -85,7 +78,6 @@ Open a pull request into `main`, then open the **Conversation** tab.
 - Risky families (`RECIPROCAL`, `RECIPROCAL_AGPL`, `RECIPROCAL_NETWORK`, `WEAK_RECIPROCAL`) are highlighted.
 - Re-pushing to the same PR **updates** the same comment (no spam).
 - The Action does **not** commit analysis files onto your branch.
-- If Code Scanning is available: findings under **Security → Code scanning**.
 
 More detail: [demo/README.md](demo/README.md).
 
@@ -98,12 +90,10 @@ File: [`.github/workflows/snippet-analysis.yml`](.github/workflows/snippet-analy
 ```text
 pull_request (opened | reopened | synchronize)
   → checkout PR head
-  → POST /api/tokens/authenticate
   → list changed files (added/modified source only)
+  → POST /api/tokens/authenticate
   → POST /api/snippet-matching  (raw file body, text/plain)
-  → build SARIF (source paths + license rules)
   → create/update PR comment
-  → upload SARIF
 ```
 
 **Scanned extensions (demo set):**  
@@ -136,7 +126,6 @@ Snippet matching is a heuristic; treat results as **review guidance**, not autom
 | Auth failure (HTTP 401/403) | Token validity; user permissions; `HOSTNAME` correct |
 | Empty matches | Code may not match KB; try `demo/fixtures/DeserializationTask.java`; ensure enough unique lines |
 | “Generative AI Compliance” / feature errors | Server registration must include Snippet Matching API capability |
-| SARIF upload warning / no Security alerts | Code Scanning not enabled; private repo without GHAS — PR comments still work (`continue-on-error` on upload) |
 | Comment missing | Workflow permissions: `pull-requests: write`; Actions allowed for the repo |
 | Double `https://` | Prefer host-only `HOSTNAME` (`sca.example.com`); full URLs are also accepted |
 
